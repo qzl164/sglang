@@ -30,6 +30,7 @@ from sglang.srt.constrained import RegexGuide
 from sglang.srt.constrained.jump_forward import JumpForwardMap
 from sglang.srt.managers.controller.radix_cache import RadixCache
 from sglang.srt.memory_pool import ReqToTokenPool, TokenToKVPool
+from sglang.srt.utils import rank_print
 
 INIT_INCREMENTAL_DETOKENIZATION_OFFSET = 5
 
@@ -711,7 +712,10 @@ class Batch:
                     logits[i].masked_fill_(~allowed_mask, float("-inf"))
 
         # TODO(lmzheng): apply penalty
+        rank_print("has nan", torch.isnan(logits).any())
+        rank_print("logits", logits)
         probs = torch.softmax(logits, dim=-1)
+        rank_print("probs", probs)
 
         if not global_server_args_dict["disable_flashinfer_sampling"]:
             max_top_k_round, batch_size = 32, probs.shape[0]

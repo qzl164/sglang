@@ -680,3 +680,10 @@ def monkey_patch_vllm_qvk_linear_loader():
         origin_weight_loader(self, param, loaded_weight, loaded_shard_id)
 
     setattr(QKVParallelLinear, "weight_loader", weight_loader_srt)
+
+
+def rank_print(*args, **kwargs):
+    from vllm.distributed import get_tensor_model_parallel_rank
+
+    if get_tensor_model_parallel_rank() % 8 == 0:
+        print(*args, **kwargs)

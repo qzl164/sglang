@@ -37,6 +37,7 @@ from vllm.model_executor.model_loader.weight_utils import default_weight_loader
 from sglang.srt.layers.logits_processor import LogitsProcessor
 from sglang.srt.layers.radix_attention import RadixAttention
 from sglang.srt.managers.controller.model_runner import InputMetadata
+from sglang.srt.utils import rank_print
 
 MergedColumnParallelLinear = None
 QKVParallelLinear = None
@@ -270,12 +271,18 @@ class LlamaModel(nn.Module):
         input_metadata: InputMetadata,
         input_embeds: torch.Tensor = None,
     ) -> torch.Tensor:
+        rank_print(input_metadata.forward_mode)
+        rank_print("before embedding", input_ids, flush=True)
         if input_embeds is None:
             hidden_states = self.embed_tokens(input_ids)
         else:
             hidden_states = input_embeds
+        rank_print("after embedding", input_embeds, flush=True)
         residual = None
         for i in range(len(self.layers)):
+            if i % 120 == 0:
+                rank_print("layer", i, flush=True)
+            torch.cuda.synchronize()
             layer = self.layers[i]
             hidden_states, residual = layer(
                 positions,
