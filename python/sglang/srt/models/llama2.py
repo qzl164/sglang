@@ -43,6 +43,12 @@ QKVParallelLinear = None
 RowParallelLinear = None
 
 
+def rank_print(*args, **kwargs):
+    from vllm.distributed import get_tensor_model_parallel_rank
+    if get_tensor_model_parallel_rank() == 0:
+        print(*args, **kwargs)
+
+
 class LlamaMLP(nn.Module):
     def __init__(
         self,
@@ -276,6 +282,7 @@ class LlamaModel(nn.Module):
             hidden_states = input_embeds
         residual = None
         for i in range(len(self.layers)):
+            rank_print(f"Running layer {i}")
             layer = self.layers[i]
             hidden_states, residual = layer(
                 positions,
