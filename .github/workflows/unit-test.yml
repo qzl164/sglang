@@ -37,6 +37,7 @@ jobs:
         pip install flashinfer -i https://flashinfer.ai/whl/cu121/torch2.3/ --force-reinstall
         pip install --upgrade transformers
         pip install accelerate
+        pip install sentence_transformers
 
     - name: Test Frontend Language
       run: |

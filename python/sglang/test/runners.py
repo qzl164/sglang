@@ -26,8 +26,8 @@ from sglang.srt.server import Runtime
 
 DEFAULT_PROMPTS = [
     "The capital of France is",
-    "The capital of the United Kindom is",
-    "Today is a sunny day and I like",
+    # "The capital of the United Kindom is",
+    # "Today is a sunny day and I like",
 ]
 
 NUM_TOP_LOGPROBS = 5
@@ -144,7 +144,6 @@ class HFRunner:
                     )
 
                 else:
-                    assert isinstance(prompts, List[str])
                     logits = self.model.encode(prompts).tolist()
 
                     out_queue.put(ModelOutput(embed_logits=logits))
@@ -182,9 +181,7 @@ class SRTRunner:
             if is_embedding_model is None
             else is_embedding_model
         )
-        if self.is_embedding_model:
-            raise NotImplementedError()
-
+        return
         self.runtime = Runtime(
             model_path=model_path,
             tp_size=tp_size,
@@ -196,38 +193,41 @@ class SRTRunner:
         prompts: Union[List[str], List[torch.Tensor]] = DEFAULT_PROMPTS,
         max_new_tokens=64,
     ):
-        # the return value contains logprobs from prefill
-        output_strs = []
-        top_input_logprobs = []
-        sampling_params = {"max_new_tokens": max_new_tokens, "temperature": 0}
-        for prompt in prompts:
-            response = self.runtime.generate(
-                prompt,
-                sampling_params=sampling_params,
-                return_logprob=True,
-                top_logprobs_num=NUM_TOP_LOGPROBS,
-            )
-            response = json.loads(response)
-            output_strs.append(response["text"])
-            top_input_logprobs.append(
-                [
-                    [tup[0] for tup in x[:NUM_TOP_LOGPROBS]]
-                    for x in response["meta_info"]["input_top_logprobs"][1:]
-                ]
-                + [
+        if not self.is_embedding_model:
+            # the return value contains logprobs from prefill
+            output_strs = []
+            top_input_logprobs = []
+            sampling_params = {"max_new_tokens": max_new_tokens, "temperature": 0}
+            for prompt in prompts:
+                response = self.runtime.generate(
+                    prompt,
+                    sampling_params=sampling_params,
+                    return_logprob=True,
+                    top_logprobs_num=NUM_TOP_LOGPROBS,
+                )
+                response = json.loads(response)
+                output_strs.append(response["text"])
+                top_input_logprobs.append(
                     [
-                        tup[0]
-                        for tup in response["meta_info"]["output_top_logprobs"][0][
-                            :NUM_TOP_LOGPROBS
+                        [tup[0] for tup in x[:NUM_TOP_LOGPROBS]]
+                        for x in response["meta_info"]["input_top_logprobs"][1:]
+                    ]
+                    + [
+                        [
+                            tup[0]
+                            for tup in response["meta_info"]["output_top_logprobs"][0][
+                                :NUM_TOP_LOGPROBS
+                            ]
                         ]
                     ]
-                ]
-            )
-            # print(response["meta_info"]["output_top_logprobs"][0])
+                )
 
-        return ModelOutput(
-            output_strs=output_strs, top_input_logprobs=top_input_logprobs
-        )
+            return ModelOutput(
+                output_strs=output_strs, top_input_logprobs=top_input_logprobs
+            )
+        else:
+            logits = self.runtime.encode(prompt)
+            return ModelOutput(embed_logits=logits)
 
     def __enter__(self):
         return self

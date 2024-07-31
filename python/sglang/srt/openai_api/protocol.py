@@ -270,11 +270,6 @@ class ChatCompletionResponse(BaseModel):
     usage: UsageInfo
 
 
-class DeltaMessage(BaseModel):
-    role: Optional[str] = None
-    content: Optional[str] = None
-
-
 class ChatCompletionResponseStreamChoice(BaseModel):
     index: int
     delta: DeltaMessage
@@ -288,3 +283,18 @@ class ChatCompletionStreamResponse(BaseModel):
     created: int = Field(default_factory=lambda: int(time.time()))
     model: str
     choices: List[ChatCompletionResponseStreamChoice]
+
+
+class DeltaMessage(BaseModel):
+    role: Optional[str] = None
+    content: Optional[str] = None
+
+
+class EmbeddingRequest(BaseModel):
+    # Ordered by official OpenAI API documentation
+    # https://platform.openai.com/docs/api-reference/embeddings/create
+    input: Union[List[int], List[List[int]], str, List[str]]
+    model: str
+    encoding_format: str = "float"
+    dimensions: int = None
+    user: Optional[str] = None

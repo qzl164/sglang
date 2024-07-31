@@ -12,6 +12,8 @@ from typing import Callable, List, Optional
 
 import numpy as np
 import requests
+import torch
+import torch.nn.functional as F
 
 from sglang.global_config import global_config
 from sglang.lang.backend.openai import OpenAI
@@ -492,3 +494,11 @@ def run_unittest_files(files: List[str], timeout_per_file: float):
         print(f"Fail. Time elapsed: {time.time() - tic:.2f}s")
 
     return 0 if success else -1
+
+
+def get_similarities(vecs1, vecs2):
+    similarities = [
+        F.cosine_similarity(torch.tensor(v1), torch.tensor(v2), dim=0)
+        for v1, v2 in zip(vecs1, vecs2)
+    ]
+    return similarities

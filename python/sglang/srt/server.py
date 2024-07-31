@@ -168,6 +168,11 @@ def available_models():
     return ModelList(data=model_cards)
 
 
+@app.post("/v1/embeddings")
+async def openai_v1_embeddings(raw_request: Request):
+    return await v1_embeddings(tokenizer_manager, raw_request)
+
+
 @app.post("/v1/files")
 async def openai_v1_files(file: UploadFile = File(...), purpose: str = Form("batch")):
     return await v1_files_create(

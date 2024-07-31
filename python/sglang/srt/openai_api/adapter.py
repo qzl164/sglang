@@ -52,6 +52,7 @@ from sglang.srt.openai_api.protocol import (
     CompletionResponseStreamChoice,
     CompletionStreamResponse,
     DeltaMessage,
+    EmbeddingRequest,
     ErrorResponse,
     FileRequest,
     FileResponse,
@@ -624,7 +625,6 @@ async def v1_completions(tokenizer_manager, raw_request: Request):
 
 
 def v1_chat_generate_request(all_requests, tokenizer_manager):
-
     input_ids = []
     sampling_params_list = []
     image_data_list = []
@@ -935,6 +935,34 @@ async def v1_chat_completions(tokenizer_manager, raw_request: Request):
         ret = [ret]
 
     response = v1_chat_generate_response(request, ret)
+
+    return response
+
+
+def v1_embedding_request(all_requests, tokenizer_manager):
+    raise NotImplementedError()
+
+
+def v1_embedding_response(request, ret, to_file=False):
+    raise NotImplementedError()
+
+
+def v1_embeddings(tokenizer_manager, raw_request: Request):
+    request_json = await raw_request.json()
+    all_requests = [EmbeddingRequest(**request_json)]
+    adapted_request, request = v1_embedding_request(all_requests, tokenizer_manager)
+
+    try:
+        ret = await tokenizer_manager.generate_request(
+            adapted_request, raw_request
+        ).__anext__()
+    except ValueError as e:
+        return create_error_response(str(e))
+
+    if not isinstance(ret, list):
+        ret = [ret]
+
+    response = v1_embedding_response(request, ret)
 
     return response
 
